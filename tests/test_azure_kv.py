@@ -29,43 +29,58 @@ def mock_crypto_client():
 
 
 @pytest.fixture
-def provider(mock_key_client, mock_crypto_client):
+def provider_and_crypto(mock_key_client, mock_crypto_client):
     cred = MagicMock()
     with patch("cyphera_keychain.azure_kv.KeyClient", return_value=mock_key_client), \
-         patch("cyphera_keychain.azure_kv.CryptographyClient", return_value=mock_crypto_client):
-        return AzureKvProvider(VAULT_URL, KEY_NAME, credential=cred)
+         patch("cyphera_keychain.azure_kv.CryptographyClient", return_value=mock_crypto_client) as _:
+        p = AzureKvProvider(VAULT_URL, KEY_NAME, credential=cred, key_client=mock_key_client)
+    return p, mock_crypto_client
 
 
 class TestResolve:
-    def test_returns_active_record(self, provider):
-        rec = provider.resolve("customer-primary")
+    def test_returns_active_record(self, provider_and_crypto):
+        provider, _ = provider_and_crypto
+        with patch("cyphera_keychain.azure_kv.CryptographyClient", return_value=MagicMock()):
+            rec = provider.resolve("customer-primary")
         assert rec.ref == "customer-primary"
         assert rec.version == 1
         assert rec.status == Status.ACTIVE
         assert len(rec.material) == 32
 
-    def test_calls_wrap_key(self, provider, mock_crypto_client):
-        provider.resolve("customer-primary")
-        mock_crypto_client.wrap_key.assert_called_once()
+    def test_calls_wrap_key(self, provider_and_crypto):
+        provider, _ = provider_and_crypto
+        mock_crypto = MagicMock()
+        with patch("cyphera_keychain.azure_kv.CryptographyClient", return_value=mock_crypto):
+            provider.resolve("customer-primary")
+        mock_crypto.wrap_key.assert_called_once()
 
-    def test_caches_result(self, provider, mock_crypto_client):
-        r1 = provider.resolve("customer-primary")
-        r2 = provider.resolve("customer-primary")
+    def test_caches_result(self, provider_and_crypto):
+        provider, _ = provider_and_crypto
+        mock_crypto = MagicMock()
+        with patch("cyphera_keychain.azure_kv.CryptographyClient", return_value=mock_crypto):
+            r1 = provider.resolve("customer-primary")
+            r2 = provider.resolve("customer-primary")
         assert r1.material == r2.material
-        assert mock_crypto_client.wrap_key.call_count == 1
+        assert mock_crypto.wrap_key.call_count == 1
 
-    def test_different_refs_cached_separately(self, provider, mock_crypto_client):
-        provider.resolve("key-a")
-        provider.resolve("key-b")
-        assert mock_crypto_client.wrap_key.call_count == 2
+    def test_different_refs_cached_separately(self, provider_and_crypto):
+        provider, _ = provider_and_crypto
+        mock_crypto = MagicMock()
+        with patch("cyphera_keychain.azure_kv.CryptographyClient", return_value=mock_crypto):
+            provider.resolve("key-a")
+            provider.resolve("key-b")
+        assert mock_crypto.wrap_key.call_count == 2
 
 
 class TestResolveVersion:
-    def test_version_one_resolves(self, provider):
-        rec = provider.resolve_version("customer-primary", 1)
+    def test_version_one_resolves(self, provider_and_crypto):
+        provider, _ = provider_and_crypto
+        with patch("cyphera_keychain.azure_kv.CryptographyClient", return_value=MagicMock()):
+            rec = provider.resolve_version("customer-primary", 1)
         assert rec.version == 1
 
-    def test_other_version_raises(self, provider):
+    def test_other_version_raises(self, provider_and_crypto):
+        provider, _ = provider_and_crypto
         with pytest.raises(KeyNotFoundError):
             provider.resolve_version("customer-primary", 2)
 
