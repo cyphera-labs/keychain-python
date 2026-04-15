@@ -30,7 +30,7 @@ aws = ["boto3>=1.42.88"]
 gcp = ["google-cloud-kms>=2.21"]
 azure = ["azure-keyvault-keys>=4.11.0", "azure-identity>=1.16"]
 vault = ["hvac>=2.1"]
-dev = ["pytest>=8", "botocore>=1.34"]
+dev = ["pytest>=9.0.3", "botocore>=1.34"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
