@@ -1,6 +1,6 @@
 # Cyphera Keychain — Python
 
-[![CI](https://github.com/cyphera-labs/keychain-python/actions/workflows/test.yml/badge.svg)](https://github.com/cyphera-labs/keychain-python/actions/workflows/test.yml)
+[![CI](https://github.com/cyphera-labs/keychain-python/actions/workflows/ci.yml/badge.svg)](https://github.com/cyphera-labs/keychain-python/actions/workflows/ci.yml)
 [![Security](https://github.com/cyphera-labs/keychain-python/actions/workflows/codeql.yml/badge.svg)](https://github.com/cyphera-labs/keychain-python/actions/workflows/codeql.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 Key provider abstraction for the [Cyphera](https://cyphera.dev) Python SDK.
