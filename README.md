@@ -174,4 +174,4 @@ rotation support.
 
 ## License
 
-MIT
+Apache 2.0
